@@ -60,6 +60,10 @@ const tripRoutes = require('./routes/tripRoutes');
 const animalRoutes = require('./routes/animalRoutes');
 const serviceProviderRoutes = require('./routes/serviceProviderRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
+const bookingRoutes = require('./routes/bookingRoutes');
+const journalRoutes = require('./routes/journalRoutes');
+const emergencyRoutes = require('./routes/emergencyRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 
 // Import middleware
 const errorHandler = require('./middleware/errorHandler');
@@ -71,6 +75,10 @@ app.use('/api/trips', tripRoutes);
 app.use('/api/animals', animalRoutes);
 app.use('/api/service-providers', serviceProviderRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/bookings', bookingRoutes);
+app.use('/api/journals', journalRoutes);
+app.use('/api/emergency', emergencyRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // 404 handler
 app.use((req, res) => {
