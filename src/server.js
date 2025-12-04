@@ -64,6 +64,7 @@ const bookingRoutes = require('./routes/bookingRoutes');
 const journalRoutes = require('./routes/journalRoutes');
 const emergencyRoutes = require('./routes/emergencyRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 // Import middleware
 const errorHandler = require('./middleware/errorHandler');
@@ -79,6 +80,7 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/journals', journalRoutes);
 app.use('/api/emergency', emergencyRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/admin', adminRoutes);
 
 // 404 handler
 app.use((req, res) => {
@@ -92,7 +94,7 @@ app.use((req, res) => {
 app.use(errorHandler);
 
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
     console.log('='.repeat(50));
     console.log(`🚀 Travelya API Server running on port ${PORT}`);
     console.log(`📍 Environment: ${process.env.NODE_ENV}`);

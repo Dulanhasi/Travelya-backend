@@ -26,3 +26,9 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+
+temp_query.sql
+test-db-connection.js
+check-firebase-user.js
+check-firebase-user2.js
+NUL
