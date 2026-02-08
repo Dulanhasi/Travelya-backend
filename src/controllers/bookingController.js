@@ -38,17 +38,49 @@ exports.createBooking = async (req, res, next) => {
 
     const travelerId = travelers[0].travelerId;
 
+    // Verify provider exists and is approved
+    const [providerCheck] = await db.query(
+      'SELECT providerId, isApproved FROM service_providers WHERE providerId = ?',
+      [providerId]
+    );
+
+    if (providerCheck.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Service provider not found'
+      });
+    }
+
+    if (!providerCheck[0].isApproved) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot book an unapproved service provider'
+      });
+    }
+
     // Calculate total amount if package is selected
     let totalAmount = null;
     if (packageId) {
       const [packages] = await db.query(
-        'SELECT price FROM service_packages WHERE packageId = ? AND providerId = ?',
+        'SELECT price, maxPeople FROM service_packages WHERE packageId = ? AND providerId = ? AND isActive = TRUE',
         [packageId, providerId]
       );
 
-      if (packages.length > 0) {
-        totalAmount = packages[0].price * numberOfPeople;
+      if (packages.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Package not found or inactive for this provider'
+        });
       }
+
+      if (packages[0].maxPeople && numberOfPeople > packages[0].maxPeople) {
+        return res.status(400).json({
+          success: false,
+          message: `Number of people exceeds package limit of ${packages[0].maxPeople}`
+        });
+      }
+
+      totalAmount = packages[0].price * numberOfPeople;
     }
 
     const [result] = await db.query(
@@ -111,11 +143,12 @@ exports.getMyBookings = async (req, res, next) => {
         sr.createdAt,
         sp.businessName,
         sp.providerType,
-        sp.contactNo,
+        u.contactNo,
         pkg.packageName,
         pkg.description as packageDescription
       FROM service_requests sr
       JOIN service_providers sp ON sr.providerId = sp.providerId
+      JOIN users u ON sp.userId = u.userId
       LEFT JOIN service_packages pkg ON sr.packageId = pkg.packageId
       WHERE sr.travelerId = ?
     `;

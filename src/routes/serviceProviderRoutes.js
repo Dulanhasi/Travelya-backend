@@ -18,6 +18,13 @@ router.get('/nearby', serviceProviderController.getNearbyProviders);
 router.get('/type/:providerType', serviceProviderController.getProvidersByType);
 
 /**
+ * @route   GET /api/service-providers/my-profile
+ * @desc    Get my provider profile
+ * @access  Private (Service Provider)
+ */
+router.get('/my-profile', authenticateUser, serviceProviderController.getMyProviderProfile);
+
+/**
  * @route   GET /api/service-providers/:providerId/packages
  * @desc    Get packages for a provider
  * @access  Public
@@ -40,13 +47,6 @@ router.get('/', serviceProviderController.getAllProviders);
 
 // Protected routes (require authentication)
 router.use(authenticateUser);
-
-/**
- * @route   GET /api/service-providers/my-profile
- * @desc    Get my provider profile
- * @access  Private (Service Provider)
- */
-router.get('/my-profile', serviceProviderController.getMyProviderProfile);
 
 /**
  * @route   PATCH /api/service-providers/profile

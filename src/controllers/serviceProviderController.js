@@ -929,7 +929,9 @@ exports.updateProviderProfile = async (req, res, next) => {
       description,
       address,
       locationLat,
-      locationLng
+      locationLng,
+      profileImage,
+      phone
     } = req.body;
 
     // Check if user is a service provider
@@ -986,10 +988,26 @@ exports.updateProviderProfile = async (req, res, next) => {
 
     params.push(userId);
 
-    await db.query(
-      `UPDATE service_providers SET ${updateFields.join(', ')} WHERE userId = ?`,
-      params
-    );
+    // await db.query(
+    //   `UPDATE service_providers SET ${updateFields.join(', ')} WHERE userId = ?`,
+    //   params
+    // );
+
+    // Update profile image in users table
+    if (profileImage) {
+      await db.query(
+        'UPDATE users SET profileImage = ? WHERE userId = ?',
+        [profileImage, userId]
+      );
+    }
+
+    // Update phone number in users table
+    if (phone) {
+      await db.query(
+        'UPDATE users SET contactNo = ? WHERE userId = ?',
+        [phone, userId]
+      );
+    }
 
     res.json({
       success: true,
