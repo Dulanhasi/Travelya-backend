@@ -32,6 +32,9 @@ router.get('/active-alerts', emergencyController.getActiveAlerts);
  * @desc    Get alert by ID
  * @access  Private (Traveler)
  */
+
+router.get('/directory', emergencyController.getEmergencyDirectory);
+
 router.get('/:alertId', emergencyController.getAlertById);
 
 /**

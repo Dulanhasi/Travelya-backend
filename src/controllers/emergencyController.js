@@ -332,3 +332,51 @@ exports.getActiveAlerts = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * Get emergency directory services
+ * GET /api/emergency/directory
+ */
+exports.getEmergencyDirectory = async (req, res, next) => {
+  try {
+    const { category, district } = req.query;
+
+    let query = `
+      SELECT
+        emergencyDirectoryId,
+        emergencyServiceName,
+        emergencyServiceCategory,
+        emergencyContactNumber,
+        emergencyDistrict,
+        isNational
+      FROM emergency_directory_services
+      WHERE 1=1
+    `;
+
+    const params = [];
+
+    if (category) {
+      query += ' AND emergencyServiceCategory = ?';
+      params.push(category);
+    }
+
+    if (district) {
+      query += ' AND emergencyDistrict = ?';
+      params.push(district);
+    }
+
+    query += ' ORDER BY emergencyServiceName ASC';
+
+    const [services] = await db.query(query, params);
+
+    res.json({
+      success: true,
+      data: services,
+      count: services.length
+    });
+
+  } catch (error) {
+    console.error('Get emergency directory error:', error);
+    next(error);
+  }
+};

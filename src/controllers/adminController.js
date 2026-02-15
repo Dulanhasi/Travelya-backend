@@ -544,20 +544,29 @@
 //   }
 // };
 
-
 // controllers/adminController.js
-const db = require('../config/database');
+const db = require("../config/database");
 
 /**
  * Helper: require authenticated admin
  */
 const requireAdmin = (req, res) => {
   if (!req.user || !req.user.userId) {
-    res.status(401).json({ success: false, message: 'Authenticated admin required' });
+    res
+      .status(401)
+      .json({ success: false, message: "Authenticated admin required" });
     return false;
   }
-  if (!req.user.isAdmin && !(req.user.userType && req.user.userType.toString().toLowerCase() === 'admin')) {
-    res.status(403).json({ success: false, message: 'Admin privileges required' });
+  if (
+    !req.user.isAdmin &&
+    !(
+      req.user.userType &&
+      req.user.userType.toString().toLowerCase() === "admin"
+    )
+  ) {
+    res
+      .status(403)
+      .json({ success: false, message: "Admin privileges required" });
     return false;
   }
   return true;
@@ -592,12 +601,12 @@ exports.getPendingProviders = async (req, res, next) => {
       FROM service_providers sp
       JOIN users u ON sp.userId = u.userId
       WHERE sp.isApproved = FALSE
-      ORDER BY u.createdAt DESC`
+      ORDER BY u.createdAt DESC`,
     );
 
     res.json({ success: true, data: providers, count: providers.length });
   } catch (error) {
-    console.error('Get pending providers error:', error);
+    console.error("Get pending providers error:", error);
     next(error);
   }
 };
@@ -614,10 +623,15 @@ exports.approveProvider = async (req, res, next) => {
     const adminUserId = req.user.userId;
 
     // Check if provider exists
-    const [providers] = await db.query('SELECT providerId FROM service_providers WHERE userId = ?', [userId]);
+    const [providers] = await db.query(
+      "SELECT providerId FROM service_providers WHERE userId = ?",
+      [userId],
+    );
 
     if (providers.length === 0) {
-      return res.status(404).json({ success: false, message: 'Service provider not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Service provider not found" });
     }
 
     // Update approval status
@@ -625,7 +639,7 @@ exports.approveProvider = async (req, res, next) => {
       `UPDATE service_providers
        SET isApproved = TRUE, approvedAt = NOW(), approvedBy = ?
        WHERE userId = ?`,
-      [adminUserId, userId]
+      [adminUserId, userId],
     );
 
     // Create notification for the provider
@@ -634,15 +648,18 @@ exports.approveProvider = async (req, res, next) => {
        VALUES (?, ?, ?, ?)`,
       [
         userId,
-        'Account Approved',
-        'Your service provider account has been approved. You can now start offering your services!',
-        'success'
-      ]
+        "Account Approved",
+        "Your service provider account has been approved. You can now start offering your services!",
+        "success",
+      ],
     );
 
-    res.json({ success: true, message: 'Service provider approved successfully' });
+    res.json({
+      success: true,
+      message: "Service provider approved successfully",
+    });
   } catch (error) {
-    console.error('Approve provider error:', error);
+    console.error("Approve provider error:", error);
     next(error);
   }
 };
@@ -659,18 +676,28 @@ exports.rejectProvider = async (req, res, next) => {
     const { reason } = req.body;
 
     if (!reason) {
-      return res.status(400).json({ success: false, message: 'Rejection reason is required' });
+      return res
+        .status(400)
+        .json({ success: false, message: "Rejection reason is required" });
     }
 
     // Check if provider exists
-    const [providers] = await db.query('SELECT providerId FROM service_providers WHERE userId = ?', [userId]);
+    const [providers] = await db.query(
+      "SELECT providerId FROM service_providers WHERE userId = ?",
+      [userId],
+    );
 
     if (providers.length === 0) {
-      return res.status(404).json({ success: false, message: 'Service provider not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Service provider not found" });
     }
 
     // Mark as not approved (keep record)
-    await db.query('UPDATE service_providers SET isApproved = FALSE WHERE userId = ?', [userId]);
+    await db.query(
+      "UPDATE service_providers SET isApproved = FALSE WHERE userId = ?",
+      [userId],
+    );
 
     // Create notification for the provider
     await db.query(
@@ -678,15 +705,18 @@ exports.rejectProvider = async (req, res, next) => {
        VALUES (?, ?, ?, ?)`,
       [
         userId,
-        'Account Not Approved',
+        "Account Not Approved",
         `Your service provider application was not approved. Reason: ${reason}`,
-        'error'
-      ]
+        "error",
+      ],
     );
 
-    res.json({ success: true, message: 'Service provider rejected successfully' });
+    res.json({
+      success: true,
+      message: "Service provider rejected successfully",
+    });
   } catch (error) {
-    console.error('Reject provider error:', error);
+    console.error("Reject provider error:", error);
     next(error);
   }
 };
@@ -722,27 +752,27 @@ exports.getAllUsers = async (req, res, next) => {
     const params = [];
 
     if (userType) {
-      query += ' AND userType = ?';
+      query += " AND userType = ?";
       params.push(userType);
     }
 
     if (isActive !== undefined) {
-      query += ' AND isActive = ?';
-      params.push(isActive === 'true' ? 1 : 0);
+      query += " AND isActive = ?";
+      params.push(isActive === "true" ? 1 : 0);
     }
 
     if (search) {
-      query += ' AND (email LIKE ? OR firstName LIKE ? OR lastName LIKE ?)';
+      query += " AND (email LIKE ? OR firstName LIKE ? OR lastName LIKE ?)";
       params.push(`%${search}%`, `%${search}%`, `%${search}%`);
     }
 
-    query += ' ORDER BY createdAt DESC';
+    query += " ORDER BY createdAt DESC";
 
     const [users] = await db.query(query, params);
 
     res.json({ success: true, data: users, count: users.length });
   } catch (error) {
-    console.error('Get all users error:', error);
+    console.error("Get all users error:", error);
     next(error);
   }
 };
@@ -759,18 +789,28 @@ exports.toggleUserStatus = async (req, res, next) => {
     const { isActive } = req.body;
 
     if (isActive === undefined) {
-      return res.status(400).json({ success: false, message: 'isActive field is required' });
+      return res
+        .status(400)
+        .json({ success: false, message: "isActive field is required" });
     }
 
     // Check if user exists
-    const [users] = await db.query('SELECT userId, email FROM users WHERE userId = ?', [userId]);
+    const [users] = await db.query(
+      "SELECT userId, email FROM users WHERE userId = ?",
+      [userId],
+    );
 
     if (users.length === 0) {
-      return res.status(404).json({ success: false, message: 'User not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
 
     // Update user status
-    await db.query('UPDATE users SET isActive = ? WHERE userId = ?', [isActive ? 1 : 0, userId]);
+    await db.query("UPDATE users SET isActive = ? WHERE userId = ?", [
+      isActive ? 1 : 0,
+      userId,
+    ]);
 
     // Create notification
     await db.query(
@@ -778,17 +818,20 @@ exports.toggleUserStatus = async (req, res, next) => {
        VALUES (?, ?, ?, ?)`,
       [
         userId,
-        isActive ? 'Account Activated' : 'Account Deactivated',
+        isActive ? "Account Activated" : "Account Deactivated",
         isActive
-          ? 'Your account has been activated by an administrator.'
-          : 'Your account has been deactivated by an administrator.',
-        isActive ? 'success' : 'warning'
-      ]
+          ? "Your account has been activated by an administrator."
+          : "Your account has been deactivated by an administrator.",
+        isActive ? "success" : "warning",
+      ],
     );
 
-    res.json({ success: true, message: `User ${isActive ? 'activated' : 'deactivated'} successfully` });
+    res.json({
+      success: true,
+      message: `User ${isActive ? "activated" : "deactivated"} successfully`,
+    });
   } catch (error) {
-    console.error('Toggle user status error:', error);
+    console.error("Toggle user status error:", error);
     next(error);
   }
 };
@@ -822,19 +865,31 @@ exports.getPendingLocations = async (req, res, next) => {
       FROM locations l
       LEFT JOIN users u ON l.suggestedBy = u.userId
       WHERE l.isApproved = FALSE
-      ORDER BY l.createdAt DESC`
+      ORDER BY l.createdAt DESC`,
     );
 
     // Parse JSON fields safely
-    locations.forEach(loc => {
-      try { if (loc.coordinates) loc.coordinates = JSON.parse(loc.coordinates); } catch (e) { loc.coordinates = null; }
-      try { if (loc.images) loc.images = JSON.parse(loc.images); } catch (e) { loc.images = []; }
-      try { if (loc.openingHours) loc.openingHours = JSON.parse(loc.openingHours); } catch (e) { loc.openingHours = {}; }
+    locations.forEach((loc) => {
+      try {
+        if (loc.coordinates) loc.coordinates = JSON.parse(loc.coordinates);
+      } catch (e) {
+        loc.coordinates = null;
+      }
+      try {
+        if (loc.images) loc.images = JSON.parse(loc.images);
+      } catch (e) {
+        loc.images = [];
+      }
+      try {
+        if (loc.openingHours) loc.openingHours = JSON.parse(loc.openingHours);
+      } catch (e) {
+        loc.openingHours = {};
+      }
     });
 
     res.json({ success: true, data: locations, count: locations.length });
   } catch (error) {
-    console.error('Get pending locations error:', error);
+    console.error("Get pending locations error:", error);
     next(error);
   }
 };
@@ -851,10 +906,15 @@ exports.approveLocation = async (req, res, next) => {
     const adminUserId = req.user.userId;
 
     // Check if location exists
-    const [locations] = await db.query('SELECT locationId, suggestedBy FROM locations WHERE locationId = ?', [locationId]);
+    const [locations] = await db.query(
+      "SELECT locationId, suggestedBy FROM locations WHERE locationId = ?",
+      [locationId],
+    );
 
     if (locations.length === 0) {
-      return res.status(404).json({ success: false, message: 'Location not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Location not found" });
     }
 
     const location = locations[0];
@@ -864,7 +924,7 @@ exports.approveLocation = async (req, res, next) => {
       `UPDATE locations
        SET isApproved = TRUE, approvedAt = NOW(), approvedBy = ?
        WHERE locationId = ?`,
-      [adminUserId, locationId]
+      [adminUserId, locationId],
     );
 
     // Create notification for the user who suggested it
@@ -874,18 +934,18 @@ exports.approveLocation = async (req, res, next) => {
          VALUES (?, ?, ?, ?, ?, ?)`,
         [
           location.suggestedBy,
-          'Location Approved',
-          'Your suggested location has been approved and is now visible to all users!',
-          'success',
-          'location',
-          locationId
-        ]
+          "Location Approved",
+          "Your suggested location has been approved and is now visible to all users!",
+          "success",
+          "location",
+          locationId,
+        ],
       );
     }
 
-    res.json({ success: true, message: 'Location approved successfully' });
+    res.json({ success: true, message: "Location approved successfully" });
   } catch (error) {
-    console.error('Approve location error:', error);
+    console.error("Approve location error:", error);
     next(error);
   }
 };
@@ -902,41 +962,106 @@ exports.rejectLocation = async (req, res, next) => {
     const { reason } = req.body;
 
     if (!reason) {
-      return res.status(400).json({ success: false, message: 'Rejection reason is required' });
+      return res.status(400).json({
+        success: false,
+        message: "Rejection reason is required",
+      });
     }
 
     // Check if location exists
-    const [locations] = await db.query('SELECT locationId, suggestedBy FROM locations WHERE locationId = ?', [locationId]);
+    const [locations] = await db.query(
+      "SELECT locationId, suggestedBy FROM locations WHERE locationId = ?",
+      [locationId],
+    );
 
     if (locations.length === 0) {
-      return res.status(404).json({ success: false, message: 'Location not found' });
+      return res.status(404).json({
+        success: false,
+        message: "Location not found",
+      });
     }
 
     const location = locations[0];
 
-    // Delete the location (or you could keep it with a rejected flag)
-    await db.query('DELETE FROM locations WHERE locationId = ?', [locationId]);
+    // 🔥 Instead of deleting — UPDATE it
+    await db.query(
+      `UPDATE locations 
+       SET isApproved = 0,
+           isActive = 0,
+           rejectedReason = ?,
+           rejectedAt = NOW(),
+           rejectedBy = ?
+       WHERE locationId = ?`,
+      [reason, req.user.userId, locationId],
+    );
 
-    // Create notification for the user who suggested it
+    // Create notification
     if (location.suggestedBy) {
       await db.query(
         `INSERT INTO notifications (userId, title, message, type)
          VALUES (?, ?, ?, ?)`,
         [
           location.suggestedBy,
-          'Location Not Approved',
+          "Location Not Approved",
           `Your suggested location was not approved. Reason: ${reason}`,
-          'error'
-        ]
+          "error",
+        ],
       );
     }
 
-    res.json({ success: true, message: 'Location rejected successfully' });
+    res.json({
+      success: true,
+      message: "Location rejected successfully",
+    });
   } catch (error) {
-    console.error('Reject location error:', error);
+    console.error("Reject location error:", error);
     next(error);
   }
 };
+
+// exports.rejectLocation = async (req, res, next) => {
+//   try {
+//     if (!requireAdmin(req, res)) return;
+
+//     const { locationId } = req.params;
+//     const { reason } = req.body;
+
+//     if (!reason) {
+//       return res.status(400).json({ success: false, message: 'Rejection reason is required' });
+//     }
+
+//     // Check if location exists
+//     const [locations] = await db.query('SELECT locationId, suggestedBy FROM locations WHERE locationId = ?', [locationId]);
+
+//     if (locations.length === 0) {
+//       return res.status(404).json({ success: false, message: 'Location not found' });
+//     }
+
+//     const location = locations[0];
+
+//     // Delete the location (or you could keep it with a rejected flag)
+//     await db.query('DELETE FROM locations WHERE locationId = ?', [locationId]);
+
+//     // Create notification for the user who suggested it
+//     if (location.suggestedBy) {
+//       await db.query(
+//         `INSERT INTO notifications (userId, title, message, type)
+//          VALUES (?, ?, ?, ?)`,
+//         [
+//           location.suggestedBy,
+//           'Location Not Approved',
+//           `Your suggested location was not approved. Reason: ${reason}`,
+//           'error'
+//         ]
+//       );
+//     }
+
+//     res.json({ success: true, message: 'Location rejected successfully' });
+//   } catch (error) {
+//     console.error('Reject location error:', error);
+//     next(error);
+//   }
+// };
 
 /**
  * Get approved locations
@@ -964,12 +1089,12 @@ exports.getApprovedLocations = async (req, res, next) => {
       FROM locations l
       LEFT JOIN users u ON l.approvedBy = u.userId
       WHERE l.isApproved = TRUE
-      ORDER BY l.approvedAt DESC`
+      ORDER BY l.approvedAt DESC`,
     );
 
     res.json({ success: true, data: locations, count: locations.length });
   } catch (error) {
-    console.error('Get approved locations error:', error);
+    console.error("Get approved locations error:", error);
     next(error);
   }
 };
@@ -982,11 +1107,26 @@ exports.getRejectedLocations = async (req, res, next) => {
   try {
     if (!requireAdmin(req, res)) return;
 
-    // Since we delete rejected locations, this will return empty
-    // If you want to track rejections, add a 'rejectedAt' field instead of deleting
-    res.json({ success: true, data: [], count: 0, message: 'Rejected locations are deleted from the system' });
+    const [locations] = await db.query(
+      `SELECT 
+         l.*, 
+         u.firstName, 
+         u.lastName, 
+         u.email
+       FROM locations l
+       LEFT JOIN users u ON l.suggestedBy = u.userId
+       WHERE l.isApproved = 0 
+         AND l.isActive = 0
+       ORDER BY l.createdAt DESC`,
+    );
+
+    res.json({
+      success: true,
+      data: locations,
+      count: locations.length,
+    });
   } catch (error) {
-    console.error('Get rejected locations error:', error);
+    console.error("Get rejected locations error:", error);
     next(error);
   }
 };
@@ -1006,14 +1146,14 @@ exports.getDashboardStats = async (req, res, next) => {
         COUNT(*) as count,
         SUM(CASE WHEN isActive = TRUE THEN 1 ELSE 0 END) as activeCount
       FROM users
-      GROUP BY userType`
+      GROUP BY userType`,
     );
 
     // Get pending approvals
     const [pendingStats] = await db.query(
       `SELECT
         (SELECT COUNT(*) FROM service_providers WHERE isApproved = FALSE) as pendingProviders,
-        (SELECT COUNT(*) FROM locations WHERE isApproved = FALSE) as pendingLocations`
+        (SELECT COUNT(*) FROM locations WHERE isApproved = FALSE) as pendingLocations`,
     );
 
     // Get location stats
@@ -1022,14 +1162,14 @@ exports.getDashboardStats = async (req, res, next) => {
         COUNT(*) as totalLocations,
         SUM(CASE WHEN isApproved = TRUE THEN 1 ELSE 0 END) as approvedLocations,
         SUM(CASE WHEN isApproved = FALSE THEN 1 ELSE 0 END) as pendingLocations
-      FROM locations`
+      FROM locations`,
     );
 
     // Get recent activity
     const [recentUsers] = await db.query(
       `SELECT COUNT(*) as newUsersToday
        FROM users
-       WHERE DATE(createdAt) = CURDATE()`
+       WHERE DATE(createdAt) = CURDATE()`,
     );
 
     res.json({
@@ -1038,11 +1178,11 @@ exports.getDashboardStats = async (req, res, next) => {
         users: userStats,
         pending: pendingStats[0],
         locations: locationStats[0],
-        recentActivity: recentUsers[0]
-      }
+        recentActivity: recentUsers[0],
+      },
     });
   } catch (error) {
-    console.error('Get dashboard stats error:', error);
+    console.error("Get dashboard stats error:", error);
     next(error);
   }
 };

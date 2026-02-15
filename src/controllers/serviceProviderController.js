@@ -658,9 +658,8 @@
 //   }
 // };
 
-
 // controllers/serviceProviderController.js
-const db = require('../config/database');
+const db = require("../config/database");
 
 /**
  * Get all approved service providers
@@ -697,31 +696,37 @@ exports.getAllProviders = async (req, res, next) => {
     const params = [];
 
     if (providerType) {
-      query += ' AND sp.providerType = ?';
+      query += " AND sp.providerType = ?";
       params.push(providerType);
     }
 
     if (isApproved !== undefined) {
       // Accept 'true'|'false' strings or boolean-like values
-      const approvedFlag = (isApproved === 'true' || isApproved === true || isApproved === '1' || isApproved === 1) ? 1 : 0;
-      query += ' AND sp.isApproved = ?';
+      const approvedFlag =
+        isApproved === "true" ||
+        isApproved === true ||
+        isApproved === "1" ||
+        isApproved === 1
+          ? 1
+          : 0;
+      query += " AND sp.isApproved = ?";
       params.push(approvedFlag);
     } else {
       // By default, only show approved providers to public users
-      query += ' AND sp.isApproved = TRUE';
+      query += " AND sp.isApproved = TRUE";
     }
 
-    query += ' ORDER BY sp.overallRating DESC, sp.totalReviews DESC';
+    query += " ORDER BY sp.overallRating DESC, sp.totalReviews DESC";
 
     const [providers] = await db.query(query, params);
 
     res.json({
       success: true,
       data: providers,
-      count: providers.length
+      count: providers.length,
     });
   } catch (error) {
-    console.error('Get service providers error:', error);
+    console.error("Get service providers error:", error);
     next(error);
   }
 };
@@ -757,13 +762,13 @@ exports.getProviderById = async (req, res, next) => {
       FROM service_providers sp
       JOIN users u ON sp.userId = u.userId
       WHERE sp.providerId = ?`,
-      [providerId]
+      [providerId],
     );
 
     if (providers.length === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Service provider not found'
+        message: "Service provider not found",
       });
     }
 
@@ -784,23 +789,31 @@ exports.getProviderById = async (req, res, next) => {
         isActive
       FROM service_packages
       WHERE providerId = ? AND isActive = TRUE`,
-      [providerId]
+      [providerId],
     );
 
     // Parse JSON fields safely
-    packages.forEach(pkg => {
-      try { if (pkg.images) pkg.images = JSON.parse(pkg.images); } catch (e) { pkg.images = []; }
-      try { if (pkg.amenities) pkg.amenities = JSON.parse(pkg.amenities); } catch (e) { pkg.amenities = []; }
+    packages.forEach((pkg) => {
+      try {
+        if (pkg.images) pkg.images = JSON.parse(pkg.images);
+      } catch (e) {
+        pkg.images = [];
+      }
+      try {
+        if (pkg.amenities) pkg.amenities = JSON.parse(pkg.amenities);
+      } catch (e) {
+        pkg.amenities = [];
+      }
     });
 
     provider.packages = packages;
 
     res.json({
       success: true,
-      data: provider
+      data: provider,
     });
   } catch (error) {
-    console.error('Get provider by ID error:', error);
+    console.error("Get provider by ID error:", error);
     next(error);
   }
 };
@@ -830,16 +843,16 @@ exports.getProvidersByType = async (req, res, next) => {
       JOIN users u ON sp.userId = u.userId
       WHERE sp.providerType = ? AND sp.isApproved = TRUE
       ORDER BY sp.overallRating DESC`,
-      [providerType]
+      [providerType],
     );
 
     res.json({
       success: true,
       data: providers,
-      count: providers.length
+      count: providers.length,
     });
   } catch (error) {
-    console.error('Get providers by type error:', error);
+    console.error("Get providers by type error:", error);
     next(error);
   }
 };
@@ -855,7 +868,7 @@ exports.getNearbyProviders = async (req, res, next) => {
     if (!lat || !lng) {
       return res.status(400).json({
         success: false,
-        message: 'Latitude and longitude are required'
+        message: "Latitude and longitude are required",
       });
     }
 
@@ -885,26 +898,26 @@ exports.getNearbyProviders = async (req, res, next) => {
     const params = [lat, lng, lat];
 
     if (providerType) {
-      query += ' AND sp.providerType = ?';
+      query += " AND sp.providerType = ?";
       params.push(providerType);
     }
 
-    query += ' HAVING distance <= ? ORDER BY distance ASC';
+    query += " HAVING distance <= ? ORDER BY distance ASC";
     params.push(radiusInKm);
 
     const [providers] = await db.query(query, params);
 
-    providers.forEach(provider => {
+    providers.forEach((provider) => {
       provider.distance = parseFloat(provider.distance).toFixed(2);
     });
 
     res.json({
       success: true,
       data: providers,
-      count: providers.length
+      count: providers.length,
     });
   } catch (error) {
-    console.error('Get nearby providers error:', error);
+    console.error("Get nearby providers error:", error);
     next(error);
   }
 };
@@ -915,10 +928,14 @@ exports.getNearbyProviders = async (req, res, next) => {
  * (Requires authenticated provider)
  */
 exports.updateProviderProfile = async (req, res, next) => {
+  console.log("Start: updateProviderProfile");
+  console.log("Req Body: ", req.body);
   try {
     // Ensure authenticated
     if (!req.user || !req.user.userId) {
-      return res.status(401).json({ success: false, message: 'Authenticated user required' });
+      return res
+        .status(401)
+        .json({ success: false, message: "Authenticated user required" });
     }
 
     const userId = req.user.userId;
@@ -931,19 +948,19 @@ exports.updateProviderProfile = async (req, res, next) => {
       locationLat,
       locationLng,
       profileImage,
-      phone
+      phone,
     } = req.body;
 
     // Check if user is a service provider
     const [providers] = await db.query(
-      'SELECT providerId FROM service_providers WHERE userId = ?',
-      [userId]
+      "SELECT providerId FROM service_providers WHERE userId = ?",
+      [userId],
     );
 
     if (providers.length === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Service provider profile not found'
+        message: "Service provider profile not found",
       });
     }
 
@@ -951,38 +968,38 @@ exports.updateProviderProfile = async (req, res, next) => {
     const params = [];
 
     if (businessName) {
-      updateFields.push('businessName = ?');
+      updateFields.push("businessName = ?");
       params.push(businessName);
     }
     if (providerType) {
-      updateFields.push('providerType = ?');
+      updateFields.push("providerType = ?");
       params.push(providerType);
     }
     if (businessRegistrationNo) {
-      updateFields.push('businessRegistrationNo = ?');
+      updateFields.push("businessRegistrationNo = ?");
       params.push(businessRegistrationNo);
     }
     if (description) {
-      updateFields.push('description = ?');
+      updateFields.push("description = ?");
       params.push(description);
     }
     if (address) {
-      updateFields.push('address = ?');
+      updateFields.push("address = ?");
       params.push(address);
     }
     if (locationLat !== undefined) {
-      updateFields.push('locationLat = ?');
+      updateFields.push("locationLat = ?");
       params.push(locationLat);
     }
     if (locationLng !== undefined) {
-      updateFields.push('locationLng = ?');
+      updateFields.push("locationLng = ?");
       params.push(locationLng);
     }
 
     if (updateFields.length === 0) {
       return res.status(400).json({
         success: false,
-        message: 'No fields to update'
+        message: "No fields to update",
       });
     }
 
@@ -995,26 +1012,37 @@ exports.updateProviderProfile = async (req, res, next) => {
 
     // Update profile image in users table
     if (profileImage) {
-      await db.query(
-        'UPDATE users SET profileImage = ? WHERE userId = ?',
-        [profileImage, userId]
-      );
+      await db.query("UPDATE users SET profileImage = ? WHERE userId = ?", [
+        profileImage,
+        userId,
+      ]);
     }
 
     // Update phone number in users table
     if (phone) {
-      await db.query(
-        'UPDATE users SET contactNo = ? WHERE userId = ?',
-        [phone, userId]
-      );
+      await db.query("UPDATE users SET contactNo = ? WHERE userId = ?", [
+        phone,
+        userId,
+      ]);
+    }
+
+    // Update businessName, descriptio, address in users table
+    //TODO: update additional fields here (longitude, latitude, businessRegistrationNo)
+    if (businessName || description || address) {
+      await db.query("UPDATE service_providers SET businessName = ?, description = ?, address = ? WHERE userId = ?", [
+        businessName,
+        description,
+        address,
+        userId,
+      ]);
     }
 
     res.json({
       success: true,
-      message: 'Provider profile updated successfully'
+      message: "Provider profile updated successfully",
     });
   } catch (error) {
-    console.error('Update provider profile error:', error);
+    console.error("Update provider profile error:", error);
     next(error);
   }
 };
@@ -1043,22 +1071,30 @@ exports.getProviderPackages = async (req, res, next) => {
       FROM service_packages
       WHERE providerId = ? AND isActive = TRUE
       ORDER BY createdAt DESC`,
-      [providerId]
+      [providerId],
     );
 
     // Parse JSON fields safely
-    packages.forEach(pkg => {
-      try { if (pkg.images) pkg.images = JSON.parse(pkg.images); } catch (e) { pkg.images = []; }
-      try { if (pkg.amenities) pkg.amenities = JSON.parse(pkg.amenities); } catch (e) { pkg.amenities = []; }
+    packages.forEach((pkg) => {
+      try {
+        if (pkg.images) pkg.images = JSON.parse(pkg.images);
+      } catch (e) {
+        pkg.images = [];
+      }
+      try {
+        if (pkg.amenities) pkg.amenities = JSON.parse(pkg.amenities);
+      } catch (e) {
+        pkg.amenities = [];
+      }
     });
 
     res.json({
       success: true,
       data: packages,
-      count: packages.length
+      count: packages.length,
     });
   } catch (error) {
-    console.error('Get provider packages error:', error);
+    console.error("Get provider packages error:", error);
     next(error);
   }
 };
@@ -1071,7 +1107,9 @@ exports.getProviderPackages = async (req, res, next) => {
 exports.createPackage = async (req, res, next) => {
   try {
     if (!req.user || !req.user.userId) {
-      return res.status(401).json({ success: false, message: 'Authenticated user required' });
+      return res
+        .status(401)
+        .json({ success: false, message: "Authenticated user required" });
     }
 
     const userId = req.user.userId;
@@ -1083,13 +1121,13 @@ exports.createPackage = async (req, res, next) => {
       duration,
       maxPeople,
       images,
-      amenities
+      amenities,
     } = req.body;
 
     if (!packageName || price === undefined || price === null) {
       return res.status(400).json({
         success: false,
-        message: 'Package name and price are required'
+        message: "Package name and price are required",
       });
     }
 
@@ -1097,14 +1135,14 @@ exports.createPackage = async (req, res, next) => {
     let providerId = req.user.providerId;
     if (!providerId) {
       const [providers] = await db.query(
-        'SELECT providerId FROM service_providers WHERE userId = ?',
-        [userId]
+        "SELECT providerId FROM service_providers WHERE userId = ?",
+        [userId],
       );
 
       if (providers.length === 0) {
         return res.status(404).json({
           success: false,
-          message: 'Service provider profile not found'
+          message: "Service provider profile not found",
         });
       }
 
@@ -1120,23 +1158,23 @@ exports.createPackage = async (req, res, next) => {
         packageName,
         description,
         price,
-        currency || 'LKR',
+        currency || "LKR",
         duration,
         maxPeople,
         JSON.stringify(images || []),
-        JSON.stringify(amenities || [])
-      ]
+        JSON.stringify(amenities || []),
+      ],
     );
 
     res.status(201).json({
       success: true,
-      message: 'Package created successfully',
+      message: "Package created successfully",
       data: {
-        packageId: result.insertId
-      }
+        packageId: result.insertId,
+      },
     });
   } catch (error) {
-    console.error('Create package error:', error);
+    console.error("Create package error:", error);
     next(error);
   }
 };
@@ -1148,7 +1186,9 @@ exports.createPackage = async (req, res, next) => {
 exports.updatePackage = async (req, res, next) => {
   try {
     if (!req.user || !req.user.userId) {
-      return res.status(401).json({ success: false, message: 'Authenticated user required' });
+      return res
+        .status(401)
+        .json({ success: false, message: "Authenticated user required" });
     }
 
     const userId = req.user.userId;
@@ -1162,7 +1202,7 @@ exports.updatePackage = async (req, res, next) => {
       maxPeople,
       images,
       amenities,
-      isActive
+      isActive,
     } = req.body;
 
     // Check ownership
@@ -1171,13 +1211,13 @@ exports.updatePackage = async (req, res, next) => {
       FROM service_packages sp
       JOIN service_providers p ON sp.providerId = p.providerId
       WHERE sp.packageId = ? AND p.userId = ?`,
-      [packageId, userId]
+      [packageId, userId],
     );
 
     if (packages.length === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Package not found or unauthorized'
+        message: "Package not found or unauthorized",
       });
     }
 
@@ -1185,62 +1225,62 @@ exports.updatePackage = async (req, res, next) => {
     const params = [];
 
     if (packageName) {
-      updateFields.push('packageName = ?');
+      updateFields.push("packageName = ?");
       params.push(packageName);
     }
     if (description) {
-      updateFields.push('description = ?');
+      updateFields.push("description = ?");
       params.push(description);
     }
     if (price !== undefined) {
-      updateFields.push('price = ?');
+      updateFields.push("price = ?");
       params.push(price);
     }
     if (currency) {
-      updateFields.push('currency = ?');
+      updateFields.push("currency = ?");
       params.push(currency);
     }
     if (duration !== undefined) {
-      updateFields.push('duration = ?');
+      updateFields.push("duration = ?");
       params.push(duration);
     }
     if (maxPeople !== undefined) {
-      updateFields.push('maxPeople = ?');
+      updateFields.push("maxPeople = ?");
       params.push(maxPeople);
     }
     if (images !== undefined) {
-      updateFields.push('images = ?');
+      updateFields.push("images = ?");
       params.push(JSON.stringify(images));
     }
     if (amenities !== undefined) {
-      updateFields.push('amenities = ?');
+      updateFields.push("amenities = ?");
       params.push(JSON.stringify(amenities));
     }
     if (isActive !== undefined) {
-      updateFields.push('isActive = ?');
+      updateFields.push("isActive = ?");
       params.push(isActive);
     }
 
     if (updateFields.length === 0) {
       return res.status(400).json({
         success: false,
-        message: 'No fields to update'
+        message: "No fields to update",
       });
     }
 
     params.push(packageId);
 
     await db.query(
-      `UPDATE service_packages SET ${updateFields.join(', ')} WHERE packageId = ?`,
-      params
+      `UPDATE service_packages SET ${updateFields.join(", ")} WHERE packageId = ?`,
+      params,
     );
 
     res.json({
       success: true,
-      message: 'Package updated successfully'
+      message: "Package updated successfully",
     });
   } catch (error) {
-    console.error('Update package error:', error);
+    console.error("Update package error:", error);
     next(error);
   }
 };
@@ -1252,7 +1292,9 @@ exports.updatePackage = async (req, res, next) => {
 exports.deletePackage = async (req, res, next) => {
   try {
     if (!req.user || !req.user.userId) {
-      return res.status(401).json({ success: false, message: 'Authenticated user required' });
+      return res
+        .status(401)
+        .json({ success: false, message: "Authenticated user required" });
     }
 
     const userId = req.user.userId;
@@ -1264,24 +1306,26 @@ exports.deletePackage = async (req, res, next) => {
       FROM service_packages sp
       JOIN service_providers p ON sp.providerId = p.providerId
       WHERE sp.packageId = ? AND p.userId = ?`,
-      [packageId, userId]
+      [packageId, userId],
     );
 
     if (packages.length === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Package not found or unauthorized'
+        message: "Package not found or unauthorized",
       });
     }
 
-    await db.query('DELETE FROM service_packages WHERE packageId = ?', [packageId]);
+    await db.query("DELETE FROM service_packages WHERE packageId = ?", [
+      packageId,
+    ]);
 
     res.json({
       success: true,
-      message: 'Package deleted successfully'
+      message: "Package deleted successfully",
     });
   } catch (error) {
-    console.error('Delete package error:', error);
+    console.error("Delete package error:", error);
     next(error);
   }
 };
@@ -1293,7 +1337,9 @@ exports.deletePackage = async (req, res, next) => {
 exports.getMyProviderProfile = async (req, res, next) => {
   try {
     if (!req.user || !req.user.userId) {
-      return res.status(401).json({ success: false, message: 'Authenticated user required' });
+      return res
+        .status(401)
+        .json({ success: false, message: "Authenticated user required" });
     }
 
     const userId = req.user.userId;
@@ -1320,19 +1366,20 @@ exports.getMyProviderProfile = async (req, res, next) => {
       FROM service_providers sp
       JOIN users u ON sp.userId = u.userId
       WHERE sp.userId = ?`,
-      [userId]
+      [userId],
     );
 
     if (providers.length === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Service provider profile not found'
+        message: "Service provider profile not found",
       });
     }
 
     const provider = providers[0];
 
     // Get my packages
+    console.log("providers: ", provider);
     const [packages] = await db.query(
       `SELECT
         packageId,
@@ -1349,23 +1396,31 @@ exports.getMyProviderProfile = async (req, res, next) => {
       FROM service_packages
       WHERE providerId = ?
       ORDER BY createdAt DESC`,
-      [provider.providerId]
+      [provider.providerId],
     );
 
-    packages.forEach(pkg => {
-      try { if (pkg.images) pkg.images = JSON.parse(pkg.images); } catch (e) { pkg.images = []; }
-      try { if (pkg.amenities) pkg.amenities = JSON.parse(pkg.amenities); } catch (e) { pkg.amenities = []; }
+    console.log("packages: ", packages);
+    packages.forEach((pkg) => {
+      try {
+        if (pkg.images) pkg.images = JSON.parse(pkg.images);
+      } catch (e) {
+        pkg.images = [];
+      }
+      try {
+        if (pkg.amenities) pkg.amenities = JSON.parse(pkg.amenities);
+      } catch (e) {
+        pkg.amenities = [];
+      }
     });
 
     provider.packages = packages;
 
     res.json({
       success: true,
-      data: provider
+      data: provider,
     });
   } catch (error) {
-    console.error('Get my provider profile error:', error);
+    console.error("Get my provider profile error:", error);
     next(error);
   }
 };
-
