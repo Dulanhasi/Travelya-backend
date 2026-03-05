@@ -66,6 +66,7 @@ const emergencyRoutes = require('./routes/emergencyRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const exploreRoutes = require('./routes/exploreRoutes');
+const misRoutes = require("./routes/misRoutes");
 
 // Import middleware
 const errorHandler = require('./middleware/errorHandler');
@@ -83,6 +84,7 @@ app.use('/api/emergency', emergencyRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/explore', exploreRoutes);
+app.use("/api/mis", misRoutes);
 
 // 404 handler
 app.use((req, res) => {

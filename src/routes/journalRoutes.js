@@ -1,51 +1,59 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const journalController = require('../controllers/journalController');
-const { authenticateUser } = require('../middleware/authMiddleware');
+const journalController = require("../controllers/journalController");
+const { authenticateUser } = require("../middleware/authMiddleware");
 
-/**
- * @route   GET /api/journals/public
- * @desc    Get public journal entries
- * @access  Public
- */
-router.get('/public', journalController.getPublicJournals);
-
-// Protected routes (require authentication)
+// All journal routes require authentication
 router.use(authenticateUser);
+
+/* ============================
+   JOURNAL ROUTES
+============================ */
 
 /**
  * @route   POST /api/journals
- * @desc    Create a travel journal entry
- * @access  Private (Traveler)
+ * @desc    Create journal
  */
-router.post('/', journalController.createJournal);
+router.post("/", journalController.createJournal);
 
 /**
- * @route   GET /api/journals/my-journals
- * @desc    Get my journal entries
- * @access  Private (Traveler)
+ * @route   GET /api/journals/my
+ * @desc    Get my journals (restore sync)
  */
-router.get('/my-journals', journalController.getMyJournals);
-
-/**
- * @route   GET /api/journals/:journalId
- * @desc    Get journal by ID
- * @access  Private
- */
-router.get('/:journalId', journalController.getJournalById);
+router.get("/my", journalController.getMyJournals);
 
 /**
  * @route   PATCH /api/journals/:journalId
- * @desc    Update a journal entry
- * @access  Private (Traveler)
+ * @desc    Update journal
  */
-router.patch('/:journalId', journalController.updateJournal);
+router.patch("/:journalId", journalController.updateJournal);
 
 /**
- * @route   DELETE /api/journals/:journalId
- * @desc    Delete a journal entry
- * @access  Private (Traveler)
+ * @route   PATCH /api/journals/:journalId/delete
+ * @desc    Soft delete journal
  */
-router.delete('/:journalId', journalController.deleteJournal);
+router.patch("/:journalId/delete", journalController.deleteJournal);
+
+/* ============================
+   JOURNAL ENTRY ROUTES
+============================ */
+
+/**
+ * @route   POST /api/journals/:journalId/entries
+ * @desc    Add entry
+ */
+router.post("/:journalId/entries", journalController.addJournalEntry);
+
+/**
+ * @route   PATCH /api/journals/entries/:entryId
+ * @desc    Update entry
+ */
+router.patch("/entries/:entryId", journalController.updateJournalEntry);
+
+/**
+ * @route   PATCH /api/journals/entries/:entryId/delete
+ * @desc    Soft delete entry
+ */
+router.patch("/entries/:entryId/delete", journalController.deleteJournalEntry);
 
 module.exports = router;
