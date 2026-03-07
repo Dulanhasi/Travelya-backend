@@ -62,6 +62,7 @@ CREATE TABLE service_providers (
     overallRating DECIMAL(3, 2) DEFAULT 0.00,
     totalReviews INT DEFAULT 0,
     isApproved BOOLEAN DEFAULT FALSE,
+    isAvailable BOOLEAN DEFAULT TRUE,
     approvedAt TIMESTAMP NULL,
     approvedBy INT,
     

@@ -1,79 +1,33 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const serviceProviderController = require('../controllers/serviceProviderController');
-const { authenticateUser } = require('../middleware/authMiddleware');
 
-/**
- * @route   GET /api/service-providers/nearby
- * @desc    Get nearby service providers
- * @access  Public
- */
-router.get('/nearby', serviceProviderController.getNearbyProviders);
+const serviceProviderController = require("../controllers/serviceProviderController");
+const { authenticateUser } = require("../middleware/authMiddleware");
 
-/**
- * @route   GET /api/service-providers/type/:providerType
- * @desc    Get providers by type
- * @access  Public
- */
-router.get('/type/:providerType', serviceProviderController.getProvidersByType);
+/* =====================================================
+   PUBLIC ROUTES — fixed paths first, wildcards last
+===================================================== */
 
-/**
- * @route   GET /api/service-providers/my-profile
- * @desc    Get my provider profile
- * @access  Private (Service Provider)
- */
-router.get('/my-profile', authenticateUser, serviceProviderController.getMyProviderProfile);
+router.get("/nearby", serviceProviderController.getNearbyProviders);
+router.get("/type/:providerType", serviceProviderController.getProvidersByType);
+router.get("/", serviceProviderController.getAllProviders);
 
-/**
- * @route   GET /api/service-providers/:providerId/packages
- * @desc    Get packages for a provider
- * @access  Public
- */
-router.get('/:providerId/packages', serviceProviderController.getProviderPackages);
+/* =====================================================
+   PROTECTED ROUTES — must come before /:providerId
+   so Express does not swallow "my-profile" as a param
+===================================================== */
 
-/**
- * @route   GET /api/service-providers/:providerId
- * @desc    Get service provider by ID
- * @access  Public
- */
-router.get('/:providerId', serviceProviderController.getProviderById);
+router.get("/my-profile", authenticateUser, serviceProviderController.getMyProviderProfile);
+router.patch("/profile", authenticateUser, serviceProviderController.updateProviderProfile);
+router.post("/packages", authenticateUser, serviceProviderController.createPackage);
+router.patch("/packages/:packageId", authenticateUser, serviceProviderController.updatePackage);
+router.delete("/packages/:packageId", authenticateUser, serviceProviderController.deletePackage);
 
-/**
- * @route   GET /api/service-providers
- * @desc    Get all service providers
- * @access  Public
- */
-router.get('/', serviceProviderController.getAllProviders);
+/* =====================================================
+   WILDCARD PARAM ROUTES — always last
+===================================================== */
 
-// Protected routes (require authentication)
-router.use(authenticateUser);
-
-/**
- * @route   PATCH /api/service-providers/profile
- * @desc    Update provider profile
- * @access  Private (Service Provider)
- */
-router.patch('/profile', serviceProviderController.updateProviderProfile);
-
-/**
- * @route   POST /api/service-providers/packages
- * @desc    Create a service package
- * @access  Private (Service Provider)
- */
-router.post('/packages', serviceProviderController.createPackage);
-
-/**
- * @route   PATCH /api/service-providers/packages/:packageId
- * @desc    Update a service package
- * @access  Private (Service Provider)
- */
-router.patch('/packages/:packageId', serviceProviderController.updatePackage);
-
-/**
- * @route   DELETE /api/service-providers/packages/:packageId
- * @desc    Delete a service package
- * @access  Private (Service Provider)
- */
-router.delete('/packages/:packageId', serviceProviderController.deletePackage);
+router.get("/:providerId/packages", serviceProviderController.getProviderPackages);
+router.get("/:providerId", serviceProviderController.getProviderById);
 
 module.exports = router;
