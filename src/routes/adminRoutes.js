@@ -84,4 +84,11 @@ router.get('/approved-locations', adminController.getApprovedLocations);
  */
 router.get('/rejected-locations', adminController.getRejectedLocations);
 
+/**
+ * @route   PUT /api/admin/locations/:locationId
+ * @desc    Admin update any location
+ * @access  Private (Admin only)
+ */
+router.put('/locations/:locationId', adminController.updateLocation);
+
 module.exports = router;

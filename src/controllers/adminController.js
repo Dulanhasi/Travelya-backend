@@ -1077,8 +1077,13 @@ exports.getApprovedLocations = async (req, res, next) => {
         l.name,
         l.category,
         l.description,
+        l.address,
         l.district,
         l.province,
+        l.coordinates,
+        l.images,
+        l.entryFee,
+        l.openingHours,
         l.ratings,
         l.totalReviews,
         l.approvedAt,
@@ -1091,6 +1096,25 @@ exports.getApprovedLocations = async (req, res, next) => {
       WHERE l.isApproved = TRUE
       ORDER BY l.approvedAt DESC`,
     );
+
+    // Parse JSON fields safely
+    locations.forEach((loc) => {
+      try {
+        if (loc.coordinates) loc.coordinates = JSON.parse(loc.coordinates);
+      } catch (e) {
+        loc.coordinates = null;
+      }
+      try {
+        if (loc.images) loc.images = JSON.parse(loc.images);
+      } catch (e) {
+        loc.images = [];
+      }
+      try {
+        if (loc.openingHours) loc.openingHours = JSON.parse(loc.openingHours);
+      } catch (e) {
+        loc.openingHours = {};
+      }
+    });
 
     res.json({ success: true, data: locations, count: locations.length });
   } catch (error) {
@@ -1127,6 +1151,59 @@ exports.getRejectedLocations = async (req, res, next) => {
     });
   } catch (error) {
     console.error("Get rejected locations error:", error);
+    next(error);
+  }
+};
+
+/**
+ * Admin update any location (approved or pending)
+ * PUT /api/admin/locations/:locationId
+ */
+exports.updateLocation = async (req, res, next) => {
+  try {
+    if (!requireAdmin(req, res)) return;
+
+    const { locationId } = req.params;
+    const { name, category, description, coordinates, address, district, province, images, entryFee, openingHours } = req.body;
+
+    const [rows] = await db.query('SELECT locationId FROM locations WHERE locationId = ?', [locationId]);
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Location not found' });
+    }
+
+    const updateFields = [];
+    const params = [];
+
+    if (name !== undefined)        { updateFields.push('name = ?');        params.push(name); }
+    if (category !== undefined)    { updateFields.push('category = ?');    params.push(category); }
+    if (description !== undefined) { updateFields.push('description = ?'); params.push(description); }
+    if (address !== undefined)     { updateFields.push('address = ?');     params.push(address); }
+    if (district !== undefined)    { updateFields.push('district = ?');    params.push(district); }
+    if (province !== undefined)    { updateFields.push('province = ?');    params.push(province); }
+    if (entryFee !== undefined)    { updateFields.push('entryFee = ?');    params.push(entryFee); }
+    if (coordinates !== undefined) {
+      updateFields.push('coordinates = ?');
+      params.push(coordinates ? JSON.stringify(coordinates) : null);
+    }
+    if (images !== undefined) {
+      updateFields.push('images = ?');
+      params.push(JSON.stringify(images));
+    }
+    if (openingHours !== undefined) {
+      updateFields.push('openingHours = ?');
+      params.push(openingHours ? JSON.stringify(openingHours) : null);
+    }
+
+    if (updateFields.length === 0) {
+      return res.status(400).json({ success: false, message: 'No fields to update' });
+    }
+
+    params.push(locationId);
+    await db.query(`UPDATE locations SET ${updateFields.join(', ')} WHERE locationId = ?`, params);
+
+    res.json({ success: true, message: 'Location updated successfully' });
+  } catch (error) {
+    console.error('Admin update location error:', error);
     next(error);
   }
 };
